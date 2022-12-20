@@ -20,6 +20,7 @@ const addRegion = async function(req,res){
 
     //await 
     let data = await cropCycleValidation(req,res,propData)
+    // console.log(data)
     
     if(!ObjectId.isValid(data))
     return

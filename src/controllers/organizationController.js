@@ -47,6 +47,8 @@ const loginOrganization = async function(req,res){
    return res.status(400).send({status:false,message:"password should be non empty string "})
 
    const data = await organizationModel.findOne({organizationName,password})
+   if(!data)
+   return res.status(404).send({status:false, message:"Org not found"})
 
    const token = jwt.sign({organizationId:data._id},"secretKey1234")
 

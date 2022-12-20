@@ -31,11 +31,10 @@ const getPropertyCycle = async function(req,res){
                 if(z!="")
                 final.add(z)
                
-                regionsFunc(data)
+                await regionsFunc(data)
             }
         }
     }
-    // console.log(propData)
 
     await regionsFunc(propData)
     let cropCycles = [...final]

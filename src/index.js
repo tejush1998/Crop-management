@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const bodyparser = require('body-parser')
 const mongoose  = require('mongoose')
-mongoose.set("strictQuery", true); //strict mode for query filter on
+mongoose.set("strictQuery", false); //strict mode for query filter on
 
 const route = require('./route.js')
 app.use(bodyparser.json())
