@@ -10,8 +10,8 @@ route.post("/registerOrganization", organizationController.registerOrganization)
 route.post("/loginOrganization", organizationController.loginOrganization)
 
 route.post("/addProperty", cropController.authentication,organizationController.addProperty) //only diff from region is it has owner
-route.post("/addRegion",cropController.authentication,cropController.cropCycleValidation,regionController.addRegion)//requires property Id
-route.post("/addChildRegion",cropController.authentication,cropController.cropCycleValidation,regionController.addChildRegion) // requires region Id
+route.post("/addRegion",cropController.authentication,regionController.addRegion)//requires property Id
+route.post("/addChildRegion",cropController.authentication,regionController.addChildRegion) // requires region Id
 
 route.post("/getPropertyCycle", propertyController.getPropertyCycle)
 route.post("/getFieldCycle", propertyController.getFieldCycle)

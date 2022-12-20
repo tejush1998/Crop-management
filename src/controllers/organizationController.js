@@ -58,7 +58,7 @@ const loginOrganization = async function(req,res){
 
 const addProperty = async function(req,res){
 
-    //give property name and organizationId
+    try{//give property name and organizationId
     const {propertyName, organizationId} = req.body
 
     //property validation
@@ -88,7 +88,9 @@ const addProperty = async function(req,res){
 
     const organizationData = await organizationModel.findOneAndUpdate({_id:organizationId},{$push:{properties:data._id}},{new:true}).populate("properties")
 
-    return res.status(201).send({status:true, message:"Organization Data", data:organizationData})
+    return res.status(201).send({status:true, message:"Organization Data", data:organizationData})}
+    catch(err)
+   {return res.status(500).send({status:false,message:err})}
 
 
 }

@@ -3,9 +3,10 @@ const cropModel = require("../models/cropModel")
 const propertyModel = require("../models/propertyModel.js")
 const regionModel = require("../models/regionModel")
 
+//either put recursion here, or while adding to region put recursion
 const getPropertyCycle = async function(req,res){
 
-    let {propertyId} = req.body
+    try{let {propertyId} = req.body
 
     if(!ObjectId.isValid(propertyId))
     return res.status(400).send({status:false, message:"wrong propertyId given"})
@@ -34,6 +35,7 @@ const getPropertyCycle = async function(req,res){
             }
         }
     }
+    // console.log(propData)
 
     await regionsFunc(propData)
     let cropCycles = [...final]
@@ -49,16 +51,23 @@ const getPropertyCycle = async function(req,res){
         }
         output.push(onecycle)
     }
-    return res.status(200).send({status:false,propertyCycles:output})
+    return res.status(200).send({status:false,propertyCycles:output})}
+    catch(err)
+   {return res.status(500).send({status:false,message:err})}
 }
 
 const getFieldCycle = async function(req,res){
 
-    const {regionId} = req.body
+    try{const {regionId} = req.body
+
+    if(!ObjectId.isValid(regionId))
+    return res.status(400).send({status:false, message:"wrong regionId given"})
 
     const data = await regionModel.findById({_id:regionId}).populate("cropCycle")
 
-    return res.status(200).send({status:true,message:data})
+    return res.status(200).send({status:true,message:data})}
+    catch(err)
+   {return res.status(500).send({status:false,message:err})}
 
 }
 

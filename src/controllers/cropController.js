@@ -1,6 +1,7 @@
 const cropModel = require('../models/cropModel.js')
 const ObjectId = require('mongoose').Types.ObjectId
 const jwt  = require('jsonwebtoken')
+let regionModel = require("../models/regionModel")
 
 const createCrop  = async function(req,res){
 
@@ -32,43 +33,88 @@ const createCrop  = async function(req,res){
 
 const getCrops = async function(req,res){
 
-    const data = await cropModel.find()
+   try{ const data = await cropModel.find()
 
-    return res.status(200).send({status:true, message:data})
+    return res.status(200).send({status:true, message:data})}
+    catch(err)
+   {return res.status(500).send({status:false,message:err})}
+
 }
 
-const cropCycleValidation = async function(req,res,next){
+const cropCycleValidation = async function(req,res,infoData){
 
+   try{ let {field, regionName, cropCycle,location} = req.body
    
-    let {cropCycle,field }= req.body 
-    let finalData =[]
-    if(field==false)
-    return next()
+    //validations
+    if(typeof regionName !="string")
+    return res.status(400).send({status:false,message:"regionName should be given in string"})
+    if (regionName.trim()=="")
+    return res.status(400).send({status:false,message:"regionName should be non empty string"})
+    if(typeof field !="boolean")
+    return res.status(400).send({status:false, message:"field should be boolean value: true of false"})
 
-    if(typeof cropCycle!="object")
-    return res.status(400).send({status:false, message:"send cropCycle in arrray of ObjectId format"})
+    //unique region
+    const check = await regionModel.findOne({regionName})
+    if(check)
+    return res.status(400).send({status:false, message:"region already exist"})
 
-    for(let i=0; i<cropCycle.length;i++)
-    {
-        if(!ObjectId.isValid(cropCycle[i]))
-        return res.status(400).send({status:false, message:`${cropCycle[i]} is invalid cropId` })
-        let cropData = await cropModel.findById(cropCycle[i])
-        if(!cropData)
-        return res.status(400).send({status:false, message:`${cropCycle[i]} crop doesn't exist` })
-        
-        finalData.push(cropData.season)
+    let data =0
+    let organizationId=infoData.organizationId
+
+    //authorization
+    if(organizationId !=  req.headers["orgId"])
+    return res.status(403).send({status:false, message:"Organization not authorized"})
+
+    //location for all region, cropcycle and location only for field true, one crop check
+    //give try catch to all
+    if(field==true)
+     {
+        //validate location
+        if (!(/^((\-?|\+?)?\d+(\.\d+)?),\s*((\-?|\+?)?\d+(\.\d+)?)$/.test(location)))
+        return res.status(400).send({status:false,message:"give location in format integer,integer"})
+
+        let check = await regionModel.findOne({location}) 
+        if(check)
+        return res.status(400).send({status:false, message:"location already exist"})
+
+        let finalData =[]
+        //validate cropCycle
+        if(typeof cropCycle!="object")
+        return res.status(400).send({status:false, message:"send cropCycle in arrray of ObjectId format"})
+    
+        for(let i=0; i<cropCycle.length;i++)
+        {
+            if(!ObjectId.isValid(cropCycle[i]))
+            return res.status(400).send({status:false, message:`${cropCycle[i]} is invalid cropId` })
+            let cropData = await cropModel.findById(cropCycle[i])
+            if(!cropData)
+            return res.status(400).send({status:false, message:`${cropCycle[i]} crop doesn't exist` })
+            
+            finalData.push(cropData.season)
+        }
+        let display = finalData.join(",")
+        if(!(finalData.includes("kharif") && finalData.includes("rabi") && finalData.includes("zaid") && finalData.length==3))
+        return res.status(400).send({status:false,message:`Make sure to give only one crop for each season rabi, kharif and zaid. Yours are ${display}`})
+        //create region 
+        data = await regionModel.create({regionName,field,cropCycle,organizationId,location})
+     }
+     else{
+        //location and cropCycle shouldnt exist
+        if(cropCycle || location)
+        return res.status(400).send({status:"false", message:"cropcycle and location will only be accepted for field:true"})
+     data = await regionModel.create({regionName,field,organizationId})
     }
-    let display = finalData.join(",")
-    if(!(finalData.includes("kharif") && finalData.includes("rabi") && finalData.includes("zaid") && finalData.length==3))
-    return res.status(400).send({status:false,message:`Make sure to give one crop for each season rabi, kharif and zaid. Yours are ${display}`})
+    //return the created region Id
+    return data._id}
+    catch(err)
+   {return res.status(500).send({status:false,message:err})}
 
-    next()
 }
 
 const authentication = async function(req,res,next)
 {
 
-    const token = req.headers["x-api-key"]
+    try{const token = req.headers["x-api-key"]
     // const token = jwt.sign({organizationId:data._id},"secretKey1234")
 
 
@@ -80,7 +126,10 @@ const authentication = async function(req,res,next)
         req.headers["orgId"] = result.organizationId
 
         next()
-    })
+    })}
+    catch(err)
+   {return res.status(500).send({status:false,message:err})}
+
 }
 
 module.exports = {createCrop, getCrops, cropCycleValidation, authentication}
